@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bofields Bank – Mobile Banking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+:root{--bg:#02040a;--accent:#4f9cff;--text:#f5f7ff;--muted:#a7afc7;--danger:#ff4f6a;--success:#37e29b;--radius:1.2rem;}
+body{background:radial-gradient(circle at top,#101530 0,#02040a 55%,#000 100%);min-height:100vh;color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+.navbar{background:rgba(2,4,10,.95);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.08);}
+.navbar .nav-link{color:var(--muted);cursor:pointer;}.navbar .nav-link:hover{color:var(--text);}
+.navbar .nav-link.active{color:var(--text) !important;font-weight:500;}
+.hero{padding:4rem 0 2rem;}.hero h1{font-size:clamp(2rem,4vw,2.6rem);font-weight:600;}.hero p{color:var(--muted);max-width:32rem;}
+.glass{background:rgba(10,16,35,.88);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);backdrop-filter:blur(20px);box-shadow:0 18px 45px rgba(0,0,0,.7);}
+.glass-inner{padding:1.4rem;}.balance{font-size:1.6rem;font-weight:600;}
+.btn-accent{border-radius:999px;padding:.6rem 1.4rem;background:linear-gradient(135deg,#4f9cff,#4f6cff);border:none;color:#fff;box-shadow:0 12px 25px rgba(79,156,255,.45);cursor:pointer;transition:filter .2s,transform .15s;}
+.btn-accent:hover{filter:brightness(1.1);transform:translateY(-1px);}.btn-accent:active{transform:translateY(0);}
+.feature-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(79,156,255,.25),rgba(55,226,155,.15));border:1px solid rgba(255,255,255,.12);font-size:1.2rem;}
+.transaction{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.transaction:last-child{border-bottom:none;}.transaction.new-entry{animation:slideIn .4s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.negative{color:var(--danger);}.positive{color:var(--success);}
+.chart{display:flex;align-items:flex-end;gap:.4rem;height:120px;margin-top:.5rem;}
+.bar{flex:1;background:linear-gradient(180deg,#4f9cff,#4f6cff);border-radius:999px;}
+.bar1{height:40%}.bar2{height:65%}.bar3{height:50%}.bar4{height:80%}.bar5{height:70%}.bar6{height:55%}
+.section-title{font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem;}
+
+/* ── Page switching ── */
+.page{display:none;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── Payments page ── */
+.payment-row{display:flex;align-items:center;gap:1rem;padding:.7rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.payment-row:last-child{border-bottom:none;}
+.pay-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.pay-icon.out{background:rgba(255,79,106,.15);color:var(–danger);}
+.pay-icon.in{background:rgba(55,226,155,.15);color:var(–success);}
+.pay-meta{flex:1;}.pay-name{font-size:.92rem;font-weight:500;}.pay-date{font-size:.75rem;color:var(–muted);}
+.pay-status{font-size:.72rem;padding:.18rem .55rem;border-radius:999px;font-weight:600;}
+.pay-status.completed{background:rgba(55,226,155,.15);color:var(–success);}
+.pay-status.pending{background:rgba(255,196,0,.15);color:#ffc400;}
+
+/* ── Cards page ── */
+.card-visual{border-radius:1.2rem;padding:1.5rem;background:linear-gradient(135deg,#1a2a6c,#4f6cff,#4f9cff);position:relative;overflow:hidden;min-height:160px;margin-bottom:1rem;}
+.card-visual::before{content:’’;position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}
+.card-visual::after{content:’’;position:absolute;bottom:-50px;left:30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);}
+.card-chip{width:36px;height:28px;border-radius:5px;background:linear-gradient(135deg,#d4a843,#f0c96b);margin-bottom:1rem;}
+.card-number{font-size:1rem;letter-spacing:.18em;font-family:monospace;margin-bottom:.6rem;}
+.card-footer-row{display:flex;justify-content:space-between;align-items:flex-end;}
+.card-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);}
+.card-value{font-size:.88rem;font-weight:600;}
+.card-brand{font-size:1.5rem;color:rgba(255,255,255,.9);}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:.9rem;}.toggle-sub{font-size:.75rem;color:var(–muted);}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:999px;cursor:pointer;transition:.3s;}
+.toggle-slider:before{content:’’;position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle input:checked + .toggle-slider{background:var(–accent);}
+.toggle input:checked + .toggle-slider:before{transform:translateX(18px);}
+
+
+/* ── Settings page ── */
+.settings-row{display:flex;align-items:center;gap:1rem;padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .2s;border-radius:.5rem;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row:hover{background:rgba(255,255,255,.03);}
+.settings-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.settings-label{flex:1;font-size:.92rem;font-weight:500;}
+.settings-sub{font-size:.75rem;color:var(–muted);}
+.settings-chevron{color:var(–muted);font-size:.9rem;}
+.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#4f9cff,#4f6cff);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;margin:0 auto .6rem;}
+.notification-badge{display:inline-block;background:var(–danger);color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;padding:.1rem .4rem;margin-left:.4rem;}
+
+/* ── Modals ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal-box{background:linear-gradient(160deg,#0d1630,#07101f);border:1px solid rgba(255,255,255,.13);border-radius:1.5rem;padding:2rem;width:min(92vw,420px);box-shadow:0 30px 70px rgba(0,0,0,.8);animation:popIn .25s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-title{font-size:1.2rem;font-weight:600;margin-bottom:1.4rem;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{background:none;border:none;color:var(–muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:.2rem .4rem;border-radius:.4rem;transition:color .2s,background .2s;}
+.modal-close:hover{color:var(–text);background:rgba(255,255,255,.07);}
+.form-label{color:var(–muted);font-size:.82rem;margin-bottom:.35rem;}
+.form-control-dark{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:.75rem;color:var(–text);padding:.65rem 1rem;width:100%;font-size:.95rem;transition:border-color .2s,box-shadow .2s;outline:none;}
+.form-control-dark::placeholder{color:rgba(167,175,199,.5);}
+.form-control-dark:focus{border-color:var(–accent);box-shadow:0 0 0 3px rgba(79,156,255,.2);}
+.amount-wrapper{position:relative;}
+.amount-prefix{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(–muted);font-size:.95rem;pointer-events:none;}
+.form-control-dark.has-prefix{padding-left:2rem;}
+.error-msg{color:var(–danger);font-size:.78rem;margin-top:.3rem;display:none;}
+.btn-send-confirm{width:100%;padding:.75rem;border-radius:999px;background:linear-gradient(135deg,#4f9cff,#4f6cff);border:none;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 10px 28px rgba(79,156,255,.4);transition:filter .2s,transform .15s;margin-top:1.2rem;}
+.btn-send-confirm:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-request-confirm{width:100%;padding:.75rem;border-radius:999px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 10px 28px rgba(168,85,247,.4);transition:filter .2s,transform .15s;margin-top:1.2rem;}
+.btn-request-confirm:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.request-success-icon{width:70px;height:70px;border-radius:50%;background:rgba(168,85,247,.15);border:2px solid #a855f7;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;color:#a855f7;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+.link-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:.75rem;padding:.65rem 1rem;font-size:.82rem;color:var(–muted);word-break:break-all;margin-top:.8rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
+.copy-btn{background:none;border:none;color:var(–accent);font-size:1.1rem;cursor:pointer;flex-shrink:0;transition:transform .15s;}
+.copy-btn:hover{transform:scale(1.15);}.copy-btn.copied{color:var(–success);}
+.btn-done-purple{margin-top:1.4rem;width:100%;padding:.7rem;border-radius:999px;background:rgba(168,85,247,.15);border:1px solid #a855f7;color:#a855f7;font-weight:600;font-size:.95rem;cursor:pointer;transition:background .2s;}
+.btn-done-purple:hover{background:rgba(168,85,247,.25);}
+.success-view{text-align:center;padding:1rem 0 .5rem;}
+.success-icon{width:70px;height:70px;border-radius:50%;background:rgba(55,226,155,.15);border:2px solid var(–success);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;color:var(–success);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
+.success-amount{font-size:1.8rem;font-weight:700;color:var(–success);}
+.success-sub{color:var(–muted);font-size:.9rem;margin-top:.3rem;}
+.btn-done{margin-top:1.4rem;width:100%;padding:.7rem;border-radius:999px;background:rgba(55,226,155,.15);border:1px solid var(–success);color:var(–success);font-weight:600;font-size:.95rem;cursor:pointer;transition:background .2s;}
+.btn-done:hover{background:rgba(55,226,155,.25);}
+
+/* Authentication / Login styles */
+.auth-wrap{min-height:48vh;display:flex;align-items:center;justify-content:center;padding:2.5rem 0;}
+.auth-card{width:100%;max-width:420px;background:rgba(8,14,28,.9);border:1px solid rgba(255,255,255,.06);border-radius:1rem;padding:1.4rem;box-shadow:0 18px 45px rgba(0,0,0,.6);}
+.auth-title{font-size:1.2rem;font-weight:700;margin-bottom:.25rem;}
+.auth-sub{color:var(--muted);font-size:.9rem;margin-bottom:1rem;}
+.auth-input{width:100%;padding:.7rem 1rem;border-radius:.8rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--text);margin-bottom:.8rem;outline:none;}
+.auth-actions{display:flex;gap:.6rem;align-items:center;justify-content:space-between;margin-top:.6rem;}
+.auth-btn{flex:1;padding:.6rem 1rem;border-radius:999px;border:0;background:linear-gradient(135deg,#4f9cff,#4f6cff);color:#fff;font-weight:700;cursor:pointer;}
+.auth-ghost{flex:1;padding:.6rem 1rem;border-radius:999px;border:1px solid rgba(255,255,255,.06);background:transparent;color:var(--muted);cursor:pointer;}
+.auth-switch{display:flex;gap:.5rem;justify-content:center;margin-top:.8rem;color:var(--muted);font-size:.9rem;}
+.auth-error{color:var(--danger);font-size:.85rem;margin-top:.5rem;display:none;text-align:center;}
+
+
+/* Contact page (enhanced) */
+.contact-wrap{max-width:980px;margin:0 auto 2.5rem;}
+.contact-grid{display:grid;grid-template-columns:320px 1fr;gap:1.25rem;align-items:start;}
+@media (max-width:900px){.contact-grid{grid-template-columns:1fr;}}
+.contact-panel{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:1rem;padding:1.25rem;display:flex;flex-direction:column;gap:.8rem;}
+.contact-brand{display:flex;align-items:center;gap:.75rem}
+.contact-brand .avatar{width:48px;height:48px;border-radius:10px;font-size:1.05rem}
+.contact-title{font-weight:700;font-size:1.05rem}
+.contact-meta{color:var(--muted);font-size:.9rem}
+.contact-list{margin-top:.6rem;display:flex;flex-direction:column;gap:.6rem}
+.contact-item{display:flex;gap:.6rem;align-items:flex-start;color:var(--muted);font-size:.92rem}
+.contact-item i{font-size:1.05rem;color:var(--accent);min-width:28px;text-align:center;margin-top:2px}
+
+/* Form styling */
+.contact-card{background:rgba(8,14,28,.9);border:1px solid rgba(255,255,255,.06);border-radius:1rem;padding:1.25rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media (max-width:700px){.form-row{grid-template-columns:1fr}}
+.form-label{display:block;color:var(--muted);font-size:.82rem;margin-bottom:.35rem}
+.contact-input{width:100%;padding:.75rem 1rem;border-radius:.75rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--text);outline:none;font-size:.95rem}
+.contact-textarea{min-height:160px;resize:vertical;padding:.85rem 1rem;border-radius:.75rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:var(--text);outline:none;font-size:.95rem}
+.contact-actions{display:flex;gap:.6rem;align-items:center;justify-content:flex-end;margin-top:.8rem}
+.contact-clear{border-radius:999px;padding:.6rem 1rem;background:transparent;border:1px solid rgba(255,255,255,.06);color:var(--muted)}
+.contact-send{border-radius:999px;padding:.6rem 1.1rem;background:linear-gradient(135deg,#4f9cff,#4f6cff);border:none;color:#fff;font-weight:700;cursor:pointer}
+.contact-success{display:none;margin-top:.9rem;padding:.85rem;border-radius:.6rem;background:linear-gradient(90deg,rgba(55,226,155,.06),rgba(79,156,255,.03));border:1px solid rgba(55,226,155,.08);color:var(--success);text-align:center;font-weight:600}
+.contact-error{display:none;color:var(--danger);font-size:.88rem;margin-top:.6rem;text-align:center}
+
+/* small helper */
+.field-inline{display:flex;gap:.6rem;align-items:center}
+</style>
+
+
+
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand text-white fw-semibold" href="#" onclick="showPage('login');return false;"><i class="bi bi-bank2 me-2"></i>Bofields Bank</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" id="nav-login" href="#" onclick="showPage('login');return false;">Login / Sign up</a></li>
+        <li class="nav-item"><a class="nav-link" id="nav-dashboard" href="#" onclick="showPage('dashboard');return false;">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" id="nav-payments" href="#" onclick="showPage('payments');return false;">Payments</a></li>
+        <li class="nav-item"><a class="nav-link" id="nav-cards" href="#" onclick="showPage('cards');return false;">Cards</a></li>
+        <li class="nav-item"><a class="nav-link" id="nav-settings" href="#" onclick="showPage('settings');return false;">Settings</a></li>
+        <li class="nav-item"><a class="nav-link" id="nav-contact" href="#" onclick="showPage('contact');return false;">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── LOGIN / SIGN UP PAGE ── -->
+<div id="page-login" class="page active">
+  <section class="hero container">
+    <h1>Welcome to Bofields Bank</h1>
+    <p class="lead">Sign in to access your accounts or create a new account to get started.</p>
+  </section>
+
+  <section class="container pb-5">
+    <div class="auth-wrap">
+      <div class="auth-card glass-inner">
+        <div style="text-align:center;margin-bottom:.6rem">
+          <div class="auth-title">Sign in to your account</div>
+          <div class="auth-sub">Secure access to your mobile banking dashboard</div>
+        </div>
+
+        <input id="authEmail" class="auth-input" type="userID" placeholder="User ID" autocomplete="userid">
+        <input id="authPassword" class="auth-input" type="password" placeholder="Password" autocomplete="current-password">
+
+        <div style="display:flex;gap:.6rem">
+          <button id="signInBtn" class="auth-btn">Sign in</button>
+          <button id="showSignupBtn" class="auth-ghost">Sign up</button>
+        </div>
+
+        <div class="auth-switch">
+          <a href="#" id="forgotLink" style="color:var(--muted);text-decoration:none" onclick="alert('Password recovery demo');return false;">Forgot password?</a>
+        </div>
+
+        <div class="auth-error" id="authError">Invalid email or password.</div>
+      </div>
+    </div>
+  </section>
+</div>
+<!-- ── HOME PAGE ── -->
+
+<div id="page-dashboard" class="page">
+  <section class="hero container">
+    <h1>Your Modern Mobile Banking</h1>
+    <p class="lead">Manage your finances, send payments and track spending with a clean modern banking dashboard.</p>
+  </section>
+  <section class="container pb-5">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="glass"><div class="glass-inner">
+          <div class="section-title">Account Balance</div>
+          <div class="balance" id="balanceDisplay">€12,485.92</div>
+          <div class="mt-3 d-flex gap-2">
+            <button class="btn-accent" id="sendMoneyBtn">Send Money</button>
+            <button class="btn btn-outline-light" id="requestBtn">Request</button>
+          </div>
+        </div></div>
+      </div>
+      <div class="col-lg-6">
+        <div class="glass"><div class="glass-inner">
+          <div class="section-title">Spending Overview</div>
+          <div class="chart">
+            <div class="bar bar1"></div><div class="bar bar2"></div><div class="bar bar3"></div>
+            <div class="bar bar4"></div><div class="bar bar5"></div><div class="bar bar6"></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="col-lg-6">
+        <div class="glass"><div class="glass-inner">
+          <div class="section-title">Recent Transactions</div>
+          <div id="transactionList">
+            <div class="transaction"><span>Amazon</span><span class="negative">-€54.20</span></div>
+            <div class="transaction"><span>Salary Payment</span><span class="positive">+€3,200</span></div>
+            <div class="transaction"><span>Starbucks</span><span class="negative">-€6.40</span></div>
+            <div class="transaction"><span>Gym Membership</span><span class="negative">-€39.99</span></div>
+            <div class="transaction"><span>Apple Store</span><span class="negative">-€249.00</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="col-lg-6">
+        <div class="glass"><div class="glass-inner">
+          <div class="section-title">Quick Actions</div>
+          <div class="d-flex gap-3 mt-2">
+            <div class="feature-icon" style="cursor:pointer" onclick="showPage('payments')" title="Payments"><i class="bi bi-send"></i></div>
+            <div class="feature-icon" style="cursor:pointer" onclick="showPage('cards')" title="Cards"><i class="bi bi-credit-card"></i></div>
+            <div class="feature-icon"><i class="bi bi-graph-up"></i></div>
+            <div class="feature-icon" style="cursor:pointer" onclick="showPage('settings')" title="Settings"><i class="bi bi-wallet2"></i></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── PAYMENTS PAGE ── -->
+
+<div id="page-payments" class="page">
+  <section class="hero container">
+    <h1>Payments</h1>
+    <p class="lead">Your full payment history and scheduled transfers.</p>
+  </section>
+  <section class="container pb-5">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="glass"><div class="glass-inner">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="section-title mb-0">All Transactions</div>
+            <select class="form-control-dark" style="width:auto;padding:.35rem .8rem;font-size:.82rem;">
+              <option>All</option><option>Sent</option><option>Received</option><option>Pending</option>
+            </select>
+          </div>
+          <div class="payment-row">
+            <div class="pay-icon out"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="pay-meta"><div class="pay-name">Apple Store</div><div class="pay-date">Apr 5, 2026 · 14:32</div></div>
+            <div class="text-end"><div class="negative fw-semibold">-€249.00</div><span class="pay-status completed">Completed</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-icon in"><i class="bi bi-arrow-down-left"></i></div>
+            <div class="pay-meta"><div class="pay-name">Salary Payment</div><div class="pay-date">Apr 1, 2026 · 09:00</div></div>
+            <div class="text-end"><div class="positive fw-semibold">+€3,200.00</div><span class="pay-status completed">Completed</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-icon out"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="pay-meta"><div class="pay-name">Gym Membership</div><div class="pay-date">Mar 31, 2026 · 08:15</div></div>
+            <div class="text-end"><div class="negative fw-semibold">-€39.99</div><span class="pay-status completed">Completed</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-icon out"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="pay-meta"><div class="pay-name">Starbucks</div><div class="pay-date">Mar 30, 2026 · 11:45</div></div>
+            <div class="text-end"><div class="negative fw-semibold">-€6.40</div><span class="pay-status completed">Completed</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-icon out"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="pay-meta"><div class="pay-name">Amazon</div><div class="pay-date">Mar 28, 2026 · 19:20</div></div>
+            <div class="text-end"><div class="negative fw-semibold">-€54.20</div><span class="pay-status completed">Completed</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-icon in"><i class="bi bi-arrow-down-left"></i></div>
+            <div class="pay-meta"><div class="pay-name">Freelance Invoice #12</div><div class="pay-date">Mar 25, 2026 · 16:00</div></div>
+            <div class="text-end"><div class="positive fw-semibold">+€850.00</div><span class="pay-status pending">Pending</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="col-lg-4">
+        <div class="glass"><div class="glass-inner">
+          <div class="section-title">Monthly Summary</div>
+          <div class="d-flex justify-content-between mb-2"><span style="color:var(--muted);font-size:.88rem;">Total In</span><span class="positive fw-semibold">+€4,050.00</span></div>
+          <div class="d-flex justify-content-between mb-2"><span style="color:var(--muted);font-size:.88rem;">Total Out</span><span class="negative fw-semibold">-€349.59</span></div>
+          <hr style="border-color:rgba(255,255,255,.08);">
+          <div class="d-flex justify-content-between"><span style="color:var(--muted);font-size:.88rem;">Net</span><span class="positive fw-semibold">+€3,700.41</span></div>
+        </div></div>
+        <div class="glass mt-3"><div class="glass-inner">
+          <div class="section-title">Scheduled</div>
+          <div class="payment-row" style="padding:.4rem 0;">
+            <div class="pay-icon out" style="width:30px;height:30px;font-size:.8rem;"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="pay-meta"><div class="pay-name" style="font-size:.85rem;">Netflix</div><div class="pay-date">Apr 12, 2026</div></div>
+            <span class="negative" style="font-size:.85rem;">-€15.99</span>
+          </div>
+          <div class="payment-row" style="padding:.4rem 0;">
+            <div class="pay-icon out" style="width:30px;height:30px;font-size:.8rem;"><i class="bi bi-arrow-up-right"></i></div>
+            <div class="pay-meta"><div class="pay-name" style="font-size:.85rem;">Rent</div><div class="pay-date">Apr 30, 2026</div></div>
+            <span class="negative" style="font-size:.85rem;">-€1,200.00</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── CARDS PAGE ── -->
+
+<div id="page-cards" class="page">
+  <section class="hero container">
+    <h1>Cards</h1>
+    <p class="lead">Manage your debit and credit cards.</p>
+  </section>
+  <section class="container pb-5">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="glass"><div class="glass-inner">
+          <div class="section-title">Primary Card</div>
+          <div class="card-visual">
+            <div class="card-chip"></div>
+            <div class="card-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;4821</div>
+            <div class="card-footer-row">
+              <div>
+                <div class="card-label">Card Holder</div>
+                <div class="card-value">Alex Bofield</div>
+              </div>
+              <div>
+                <div class="card-label">Expires</div>
+                <div class="card-value">09/28</div>
+              </div>
+              <div class="card-brand"><i class="bi bi-credit-card-2-front"></i></div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-outline-light btn-sm" style="border-radius:999px;font-size:.82rem;"><i class="bi bi-eye me-1"></i>Show Number</button>
+            <button class="btn btn-outline-light btn-sm" style="border-radius:999px;font-size:.82rem;"><i class="bi bi-lock me-1"></i>Freeze Card</button>
+          </div>
+        </div></div>
+
+
+    <div class="glass mt-3"><div class="glass-inner">
+      <div class="section-title">Secondary Card</div>
+      <div class="card-visual" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);">
+        <div class="card-chip"></div>
+        <div class="card-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;9034</div>
+        <div class="card-footer-row">
+          <div>
+            <div class="card-label">Card Holder</div>
+            <div class="card-value">Alex Bofield</div>
+          </div>
+          <div>
+            <div class="card-label">Expires</div>
+            <div class="card-value">03/27</div>
+          </div>
+          <div class="card-brand"><i class="bi bi-credit-card-2-back"></i></div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-outline-light btn-sm" style="border-radius:999px;font-size:.82rem;"><i class="bi bi-eye me-1"></i>Show Number</button>
+        <button class="btn btn-outline-light btn-sm" style="border-radius:999px;font-size:.82rem;"><i class="bi bi-lock me-1"></i>Freeze Card</button>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="glass"><div class="glass-inner">
+      <div class="section-title">Card Controls</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Online Payments</div><div class="toggle-sub">Allow e-commerce transactions</div></div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Contactless</div><div class="toggle-sub">Tap to pay enabled</div></div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">International Use</div><div class="toggle-sub">Payments outside Ireland</div></div>
+        <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">ATM Withdrawals</div><div class="toggle-sub">Cash withdrawals allowed</div></div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div></div>
+
+    <div class="glass mt-3"><div class="glass-inner">
+      <div class="section-title">Spending Limits</div>
+      <div class="d-flex justify-content-between mb-2"><span style="color:var(--muted);font-size:.88rem;">Daily Limit</span><span style="font-size:.88rem;">€2,000.00</span></div>
+      <div class="progress mb-3" style="height:6px;background:rgba(255,255,255,.1);border-radius:999px;">
+        <div style="width:35%;height:100%;background:linear-gradient(90deg,#4f9cff,#4f6cff);border-radius:999px;"></div>
+      </div>
+      <div class="d-flex justify-content-between mb-2"><span style="color:var(--muted);font-size:.88rem;">Monthly Limit</span><span style="font-size:.88rem;">€10,000.00</span></div>
+      <div class="progress" style="height:6px;background:rgba(255,255,255,.1);border-radius:999px;">
+        <div style="width:18%;height:100%;background:linear-gradient(90deg,#a855f7,#7c3aed);border-radius:999px;"></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+
+  </section>
+</div>
+
+<!-- ── SETTINGS PAGE ── -->
+
+<div id="page-settings" class="page">
+  <section class="hero container">
+    <h1>Settings</h1>
+    <p class="lead">Manage your account preferences and security.</p>
+  </section>
+  <section class="container pb-5">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="glass"><div class="glass-inner text-center">
+          <div class="avatar">AB</div>
+          <div style="font-size:1.1rem;font-weight:600;">Alex Bofield</div>
+          <div style="color:var(--muted);font-size:.85rem;">alex.bofield@email.com</div>
+          <div style="color:var(--muted);font-size:.8rem;margin-top:.3rem;">Member since Jan 2023</div>
+          <button class="btn-accent mt-3" style="font-size:.85rem;padding:.5rem 1.2rem;">Edit Profile</button>
+        </div></div>
+      </div>
+      <div class="col-lg-8">
+        <div class="glass mb-3"><div class="glass-inner">
+          <div class="section-title">Account</div>
+          <div class="settings-row">
+            <div class="settings-icon" style="background:rgba(79,156,255,.15);color:var(--accent);"><i class="bi bi-person"></i></div>
+            <div><div class="settings-label">Personal Information</div><div class="settings-sub">Name, phone, address</div></div>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+          </div>
+          <div class="settings-row">
+            <div class="settings-icon" style="background:rgba(55,226,155,.15);color:var(--success);"><i class="bi bi-shield-lock"></i></div>
+            <div><div class="settings-label">Security</div><div class="settings-sub">Password, 2FA, biometrics</div></div>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+          </div>
+          <div class="settings-row">
+            <div class="settings-icon" style="background:rgba(255,196,0,.15);color:#ffc400;"><i class="bi bi-bell"></i></div>
+            <div><div class="settings-label">Notifications <span class="notification-badge">3</span></div><div class="settings-sub">Alerts and push notifications</div></div>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+          </div>
+          <div class="settings-row">
+            <div class="settings-icon" style="background:rgba(168,85,247,.15);color:#a855f7;"><i class="bi bi-bank"></i></div>
+            <div><div class="settings-label">Linked Accounts</div><div class="settings-sub">2 accounts connected</div></div>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+          </div>
+        </div></div>
+
+
+    <div class="glass mb-3"><div class="glass-inner">
+      <div class="section-title">Preferences</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Dark Mode</div><div class="toggle-sub">Always on</div></div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Face ID Login</div><div class="toggle-sub">Biometric authentication</div></div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Marketing Emails</div><div class="toggle-sub">Offers and promotions</div></div>
+        <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+      </div>
+    </div></div>
+
+    <div class="glass"><div class="glass-inner">
+      <div class="settings-row" style="color:var(--danger);">
+        <div class="settings-icon" style="background:rgba(255,79,106,.15);color:var(--danger);"><i class="bi bi-box-arrow-right"></i></div>
+        <div><div class="settings-label" style="color:var(--danger);">Sign Out</div><div class="settings-sub">Log out of your account</div></div>
+        <i class="bi bi-chevron-right settings-chevron"></i>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+
+  </section>
+</div>
+</div>
+
+<!-- ── CONTACT PAGE ── -->
+<div id="page-contact" class="page">
+  <section class="hero container">
+    <h1>Contact Us</h1>
+    <p class="lead">Need help? Send us a message and we'll get back to you within 24 hours.</p>
+  </section>
+
+  <section class="container pb-5">
+    <div class="contact-wrap">
+      <div class="contact-card glass-inner">
+        <form id="contactForm" novalidate>
+          <div class="contact-row">
+            <div class="contact-col">
+              <label class="contact-label" for="cname">Full name</label>
+              <input id="cname" name="name" class="contact-input" type="text" placeholder="Alex Bofield" required>
+            </div>
+            <div class="contact-col">
+              <label class="contact-label" for="cemail">Email</label>
+              <input id="cemail" name="email" class="contact-input" type="email" placeholder="you@email.com" required>
+            </div>
+            <div class="contact-col" style="flex:1 1 100%;">
+              <label class="contact-label" for="csubject">Message</label>
+              <input id="csubject" name="subject" class="contact-input" type="text" placeholder="Issue or question" required>
+          </div>
+
+          <div class="contact-actions">
+            <button type="reset" id="contactClear" class="btn btn-outline-light" style="border-radius:999px;">Clear</button>
+            <button type="submit" id="contactSend" class="btn-accent">Send message</button>
+    </div>
+  </section>
+</div>
+<!-- Send Money Modal -->
+
+<div class="modal-overlay" id="sendModal">
+  <div class="modal-box">
+    <div id="formView">
+      <div class="modal-title">
+        <span><i class="bi bi-send me-2" style="color:var(--accent)"></i>Send Money</span>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="mb-3">
+        <div class="form-label">Recipient name or email</div>
+        <input type="text" id="recipient" class="form-control-dark" placeholder="e.g. John Doe">
+        <div class="error-msg" id="recipientError">Please enter a recipient.</div>
+      </div>
+      <div class="mb-3">
+        <div class="form-label">Amount (€)</div>
+        <div class="amount-wrapper">
+          <span class="amount-prefix">€</span>
+          <input type="number" id="amount" class="form-control-dark has-prefix" placeholder="0.00" min="0.01" step="0.01">
+        </div>
+        <div class="error-msg" id="amountError">Please enter a valid amount.</div>
+        <div class="error-msg" id="fundsError">Insufficient funds.</div>
+      </div>
+      <div class="mb-1">
+        <div class="form-label">Note <span style="opacity:.5">(optional)</span></div>
+        <input type="text" id="note" class="form-control-dark" placeholder="e.g. Rent, dinner split…">
+      </div>
+      <button class="btn-send-confirm" id="confirmSend"><i class="bi bi-send-fill me-2"></i>Confirm Transfer</button>
+    </div>
+    <div id="successView" style="display:none">
+      <div class="success-view">
+        <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+        <div class="success-amount" id="successAmount"></div>
+        <div class="success-sub">sent to <strong id="successRecipient"></strong></div>
+        <div class="success-sub mt-2" style="font-size:.8rem;opacity:.6" id="successNote"></div>
+        <button class="btn-done" id="doneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Request Money Modal -->
+<div class="modal-overlay" id="requestModal">
+  <div class="modal-box">
+    <div id="reqFormView">
+      <div class="modal-title">
+        <span><i class="bi bi-arrow-down-circle me-2" style="color:#a855f7"></i>Request Money</span>
+        <button class="modal-close" id="closeRequestModal">&times;</button>
+      </div>
+      <div class="mb-3">
+        <div class="form-label">Request from (name or email)</div>
+        <input type="text" id="reqFrom" class="form-control-dark" placeholder="e.g. Jane Smith">
+        <div class="error-msg" id="reqFromError">Please enter a name or email.</div>
+      </div>
+      <div class="mb-3">
+        <div class="form-label">Amount (€)</div>
+        <div class="amount-wrapper">
+          <span class="amount-prefix">€</span>
+          <input type="number" id="reqAmount" class="form-control-dark has-prefix" placeholder="0.00" min="0.01" step="0.01">
+        </div>
+        <div class="error-msg" id="reqAmountError">Please enter a valid amount.</div>
+      </div>
+      <div class="mb-1">
+        <div class="form-label">Note <span style="opacity:.5">(optional)</span></div>
+        <input type="text" id="reqNote" class="form-control-dark" placeholder="e.g. Dinner split, rent…">
+      </div>
+      <button class="btn-request-confirm" id="confirmRequest"><i class="bi bi-link-45deg me-2"></i>Generate Payment Link</button>
+    </div>
+    <div id="reqSuccessView" style="display:none">
+      <div class="success-view">
+        <div class="request-success-icon"><i class="bi bi-link-45deg"></i></div>
+        <div style="font-size:1.4rem;font-weight:700;color:#a855f7" id="reqSuccessAmount"></div>
+        <div class="success-sub">requested from <strong id="reqSuccessFrom"></strong></div>
+        <div class="success-sub mt-1" style="font-size:.8rem;opacity:.6" id="reqSuccessNote"></div>
+        <div class="form-label mt-3" style="text-align:left">Payment link</div>
+        <div class="link-box">
+          <span id="payLink"></span>
+          <button class="copy-btn" id="copyLinkBtn" title="Copy link"><i class="bi bi-clipboard"></i></button>
+        </div>
+        <button class="btn-done-purple" id="reqDoneBtn">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+  let balance = 12485.92;
+  const fmt = n => '€' + n.toLocaleString('en-IE', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // ── Page navigation ──
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    // close mobile nav if open
+    const navCollapse = document.getElementById('nav');
+    if (navCollapse.classList.contains('show')) {
+      new bootstrap.Collapse(navCollapse).hide();
+    }
+  }
+
+  // ── Send Money ──
+  const sendModal   = document.getElementById('sendModal');
+  const formView    = document.getElementById('formView');
+  const successView = document.getElementById('successView');
+  const balanceEl   = document.getElementById('balanceDisplay');
+  const txList      = document.getElementById('transactionList');
+  const recipientEl = document.getElementById('recipient');
+  const amountEl    = document.getElementById('amount');
+  const noteEl      = document.getElementById('note');
+
+  function openSendModal() {
+    sendModal.classList.add('active');
+    recipientEl.value=''; amountEl.value=''; noteEl.value='';
+    ['recipientError','amountError','fundsError'].forEach(id => document.getElementById(id).style.display='none');
+    formView.style.display='block'; successView.style.display='none';
+    recipientEl.focus();
+  }
+  function closeSendModal() { sendModal.classList.remove('active'); }
+
+  function sendMoney() {
+    let ok = true;
+    ['recipientError','amountError','fundsError'].forEach(id => document.getElementById(id).style.display='none');
+    if (!recipientEl.value.trim()) { document.getElementById('recipientError').style.display='block'; ok=false; }
+    const amt = parseFloat(amountEl.value);
+    if (!amountEl.value || isNaN(amt) || amt <= 0) { document.getElementById('amountError').style.display='block'; ok=false; }
+    else if (amt > balance) { document.getElementById('fundsError').style.display='block'; ok=false; }
+    if (!ok) return;
+
+    const a = parseFloat(amt.toFixed(2));
+    const recipient = recipientEl.value.trim();
+    const note = noteEl.value.trim();
+    balance -= a;
+    balanceEl.textContent = fmt(balance);
+
+    const tx = document.createElement('div');
+    tx.className = 'transaction new-entry';
+    tx.innerHTML = '<span>' + recipient + (note ? ' <span style="color:var(--muted);font-size:.8rem">· ' + note + '</span>' : '') + '</span><span class="negative">-' + fmt(a) + '</span>';
+    txList.insertBefore(tx, txList.firstChild);
+
+    document.getElementById('successAmount').textContent    = fmt(a);
+    document.getElementById('successRecipient').textContent = recipient;
+    document.getElementById('successNote').textContent      = note;
+    formView.style.display='none'; successView.style.display='block';
+  }
+
+  document.getElementById('sendMoneyBtn').addEventListener('click', openSendModal);
+  document.getElementById('closeModal').addEventListener('click', closeSendModal);
+  document.getElementById('doneBtn').addEventListener('click', closeSendModal);
+  document.getElementById('confirmSend').addEventListener('click', sendMoney);
+  sendModal.addEventListener('click', e => { if (e.target===sendModal) closeSendModal(); });
+  [amountEl, noteEl].forEach(el => el.addEventListener('keydown', e => { if (e.key==='Enter') sendMoney(); }));
+
+  // ── Request Money ──
+  const requestModal = document.getElementById('requestModal');
+  const reqFormView  = document.getElementById('reqFormView');
+  const reqSuccView  = document.getElementById('reqSuccessView');
+  const reqFromEl    = document.getElementById('reqFrom');
+  const reqAmountEl  = document.getElementById('reqAmount');
+  const reqNoteEl    = document.getElementById('reqNote');
+  const copyLinkBtn  = document.getElementById('copyLinkBtn');
+
+  function openRequestModal() {
+    requestModal.classList.add('active');
+    reqFromEl.value=''; reqAmountEl.value=''; reqNoteEl.value='';
+    ['reqFromError','reqAmountError'].forEach(id => document.getElementById(id).style.display='none');
+    reqFormView.style.display='block'; reqSuccView.style.display='none';
+    reqFromEl.focus();
+  }
+  function closeRequestModal() { requestModal.classList.remove('active'); }
+
+  function requestMoney() {
+    let ok = true;
+    ['reqFromError','reqAmountError'].forEach(id => document.getElementById(id).style.display='none');
+    if (!reqFromEl.value.trim()) { document.getElementById('reqFromError').style.display='block'; ok=false; }
+    const amt = parseFloat(reqAmountEl.value);
+    if (!reqAmountEl.value || isNaN(amt) || amt <= 0) { document.getElementById('reqAmountError').style.display='block'; ok=false; }
+    if (!ok) return;
+
+    const a    = parseFloat(amt.toFixed(2));
+    const from = reqFromEl.value.trim();
+    const note = reqNoteEl.value.trim();
+    const slug = from.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const params = new URLSearchParams({to:slug, amt:a.toFixed(2)});
+    if (note) params.set('ref', note);
+    const link = 'https://bofields.bank/pay?' + params.toString();
+
+    document.getElementById('reqSuccessAmount').textContent = fmt(a);
+    document.getElementById('reqSuccessFrom').textContent   = from;
+    document.getElementById('reqSuccessNote').textContent   = note;
+    document.getElementById('payLink').textContent          = link;
+    copyLinkBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
+    copyLinkBtn.classList.remove('copied');
+    reqFormView.style.display='none'; reqSuccView.style.display='block';
+  }
+
+  document.getElementById('requestBtn').addEventListener('click', openRequestModal);
+  document.getElementById('closeRequestModal').addEventListener('click', closeRequestModal);
+  document.getElementById('reqDoneBtn').addEventListener('click', closeRequestModal);
+  document.getElementById('confirmRequest').addEventListener('click', requestMoney);
+  requestModal.addEventListener('click', e => { if (e.target===requestModal) closeRequestModal(); });
+  [reqAmountEl, reqNoteEl].forEach(el => el.addEventListener('keydown', e => { if (e.key==='Enter') requestMoney(); }));
+
+  copyLinkBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('payLink').textContent).then(() => {
+      copyLinkBtn.innerHTML = '<i class="bi bi-clipboard-check"></i>';
+      copyLinkBtn.classList.add('copied');
+      setTimeout(() => { copyLinkBtn.innerHTML='<i class="bi bi-clipboard"></i>'; copyLinkBtn.classList.remove('copied'); }, 2000);
+    });
+  });
+
+  document.addEventListener('keydown', e => { if (e.key==='Escape') { closeSendModal(); closeRequestModal(); } });
+</script>
+
+</body>
+</html>
